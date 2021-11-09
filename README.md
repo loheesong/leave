@@ -1,5 +1,5 @@
 # Leave Management App
-Leave management app is a django application that helps employees and managers manage their leaves. 
+Leave management app is a django application that helps employees and managers manage their leaves. This project was the capstone for CS50 Web Programming with Python and Javascript. 
 
 ## Features
 
@@ -17,6 +17,10 @@ Leave management app is a django application that helps employees and managers m
   - Table view of when employees are on leave, arranged chronologically for better planning.
   - List of pending leaves with approve or reject leave button.
   - Section to add new members this manager is in charge of.
+
+## Demonstration 
+
+[Click here to view the demonstration on Youtube](https://youtu.be/TVhaovQ0HVQ)
 
 ## How to run this application
 
