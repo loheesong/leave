@@ -1,4 +1,5 @@
 # Leave Management App
+Leave management app is a django application that helps employees and managers manage their leaves. 
 
 ## Features
 
