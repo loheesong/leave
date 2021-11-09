@@ -1,0 +1,270 @@
+{% extends "leave/layout.html" %}
+
+{% block body %}
+    <div class="container">
+        <!-- Manager view -->
+        {% if is_manager %}
+            <div id="manager_view">
+                <div class="row">
+                    <div class="col">  
+                        <h1>Manager {{ user.username|capfirst }}</h1>
+                    </div>
+                </div> 
+
+                <!-- list of employees -->
+                <div class="row">
+                    <div class="col">
+                        <h3>My Team</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-4">
+                        <ul class="list-group">
+                            {% for employee in employee_list %}
+                                <li class="list-group-item">{{ employee.employee }}</li>
+                            {% empty %}
+                                <li class="list-group-item">Not in charge of any employees</li> 
+                            {% endfor %}
+                        </ul>
+                    </div>  
+                </div> 
+
+                <!-- list of when employees taking leave / approved leaves -->
+                <div class="row">
+                    <div class="col">
+                        <h3>Approved Leaves</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <table class="table" id="approved_table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Employee</th>
+                                    <th scope="col">Start</th>
+                                    <th scope="col">End</th>
+                                    <th scope="col">Duration</th>
+                                </tr>
+                                <tbody>
+                                    {% for leave in approved_leaves %}
+                                        <tr>
+                                            <th scope="row">{{ leave.employee }}</th>
+                                            <td>{{ leave.start }}</td>
+                                            <td>{{ leave.end }}</td>
+                                            <td>{{ leave.duration }} days</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td>No approved leaves </td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- list of pending approval leaves -->
+                <div class="row">
+                    <div class="col">
+                        <h3>Pending Approval</h3>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <table class="table" id="pending_table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Employee</th>
+                                    <th scope="col">Start</th>
+                                    <th scope="col">End</th>
+                                    <th scope="col">Duration</th>
+                                    <th scope="col">Action</th>
+                                </tr>
+                                <tbody>
+                                    {% for leave in pending_leaves %}
+                                        <tr id="tr_{{leave.id}}">
+                                            <th scope="row">{{ leave.employee }}</th>
+                                            <td>{{ leave.start }}</td>
+                                            <td>{{ leave.end }}</td>
+                                            <td>{{ leave.duration }} days</td>
+                                            <td>
+                                                <button type="button" class="btn btn-success leave_buttons" id="approve {{ leave.id }}">Approve</button>
+                                                <button type="button" class="btn btn-danger leave_buttons" id="reject {{ leave.id }}">Reject</button>
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr><td>No pending leaves</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                              </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- add new employees -->
+            <div class="row">
+                <div class="col">
+                    <h3>Add New Members</h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="alert alert-success" role="alert" style="display: none;" id="add_employee_success_message">
+                        Added new member to your team.
+                    </div>
+                    <div class="alert alert-danger" role="alert" style="display: none;" id="add_employee_failure_message">
+                        Please select from the options below.
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <form id="add_employee_form">
+                        <div class="form-row align-items-center">
+                            <div class="col-auto">
+                                <label for="all_employee" class="form-label ml-2">Employees:</label>
+                            </div>
+                            <div class="col-auto">
+                                <input required list="all_employees" name="all_employees" id="all_employee" class="form-control">
+                                <datalist id="all_employees">
+                                    {% for employee in all_employees %}
+                                        <option>{{ employee }}</option>
+                                    {% empty %}
+                                        <option value=""></option>
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary mb-2">Add</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            
+        <!-- Employee view -->
+        {% else %}
+            <div class="row">
+                <div class="col">  
+                    <h1>Employee {{ user.username|capfirst }}</h1>
+                </div>  
+            </div>  
+
+            <div class="row my-2">
+                <div class="col">
+                    <div class="card" style="width: 50%;">
+                        <div class="card-body">
+                            <h5 class="card-title">Annual leaves left {{ leave_count }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <form action="{% url 'apply' %}" method="post" id="apply">
+                        <div class="form-row">
+                            <ul class="list-unstyled">
+                                <li>How to apply:
+                                    <ul>
+                                        <li>
+                                            <strong>Half (0.5) day: </strong>Select the same date for both start and end dates, then both AM for AM half day. 
+                                        </li>
+                                        <li>
+                                            <strong>Full (1.0) day: </strong>Select the same date for both start and end dates, then AM for start and PM for end. 
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {% csrf_token %}
+                        <!-- start input -->
+                        <div class="form-row">
+                            <div class="form-group row">
+                                <label for="startDate" class="col-4 col-form-label">Start Date: </label>
+                                <div class="col-8">
+                                    <input type="date" id="startDate" name="startDate" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group mx-2 mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="startTime" id="startAM" value="AM" checked>
+                                    <label class="form-check-label" for="startAM">AM</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="startTime" id="startPM" value="PM">
+                                    <label class="form-check-label" for="startPM">PM</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- end input -->
+                        <div class="form-row">
+                            <div class="form-group row">
+                                <label for="startDate" class="col-4 col-form-label">End Date: </label>
+                                <div class="col-8">
+                                    <input type="date" id="endDate" name="endDate" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="form-group mx-2 mt-2">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="endTime" id="endAM" value="AM" checked>
+                                    <label class="form-check-label" for="endAM">AM</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="endTime" id="endPM" value="PM">
+                                    <label class="form-check-label" for="endPM">PM</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- superior -->
+                        <div class="form-row">
+                            <div class="form-group row">
+                                <label for="superior" class="col-4 col-form-label">Superior</label>
+                                <div class="col-8">
+                                    <select id="superior" name="superior" class="form-control">
+                                        {% for superior in superior_list %}
+                                            <option>{{ superior }}</option>
+                                        {% empty %}
+                                            <option value=""></option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <div class="form-row ">
+                            <div class="alert alert-primary col-2" role="alert">
+                                <p class="text-center" style="margin-bottom: 0;" id="show_days_leave">__ day(s)</p>
+                            </div>
+                            <div class="col-3">
+                                <button type="button" class="btn btn-outline-primary" id="how_many_days_button">
+                                    Calculate number of days leave
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <button type="submit" form="apply" class="btn btn-outline-primary" value="Submit">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        
+    </div>
+    
+{% endblock %}
+
